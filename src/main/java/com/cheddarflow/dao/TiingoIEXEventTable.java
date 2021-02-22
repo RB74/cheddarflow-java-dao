@@ -49,6 +49,45 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     }
 
     @Override
+    public void bulkInsert(List<TiingoIEXEvent> in) {
+        final List<Object[]> params = this.getBatchParameters(in);
+        if (params.isEmpty())
+            return;
+
+        final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(false);
+        final String insertOp = "insert ignore into tiingo_iex_data (symbol, tiingoEventType, createdOn, bidSize, bidPrice, "
+          + "midPrice, askPrice, askSize, lastPrice, lastSize, halted, afterHours, intermarketSweepOrder, oddLot, "
+          + "subjectToNMSRule611) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        template.batchUpdate(insertOp, params);
+
+        this.logger.debug("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
+    }
+
+    private List<Object[]> getBatchParameters(List<TiingoIEXEvent> input) {
+        final List<Object[]> params = new ArrayList<>(input.size());
+        input.forEach(i ->
+          params.add(new Object[] {
+            i.getSymbol(),
+            i.getTiingoEventType().name(),
+            i.getCreatedOn(),
+            i.getBidSize(),
+            i.getBidPrice(),
+            i.getMidPrice(),
+            i.getAskPrice(),
+            i.getAskSize(),
+            i.getLastPrice(),
+            i.getLastSize(),
+            i.isHalted() ? 1 : 0,
+            i.isAfterHours() ? 1 : 0,
+            i.isIntermarketSweepOrder() ? 1 : 0,
+            i.isOddLot() ? 1 : 0,
+            i.isSubjectToNMSRule611() ? 1 : 0
+          })
+        );
+        return params;
+    }
+
+    @Override
     public List<TiingoIEXEvent> listObjects(Date from, Date to, List<String> symbolList) {
         if (from.equals(to)) {
             to = new Date(to.getTime() + TimeUnit.DAYS.toMillis(1));
