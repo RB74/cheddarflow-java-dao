@@ -144,13 +144,13 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
           + "tradeid, size, symbol, expiry, strike, type, price, side, exch, volume, "
           + "cond, ivol, ivolchg, ivolchgpct, delta, deltadollar, spot, spotchg, vega, vegadollar, theta, "
           + "bidprice, bidsize, askprice, asksize, notional, oi, sentiment, pc, thirdfriday, otm, events, section, subsector, "
-          + "timestamp, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-          + " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+          + "timestamp, date, time, unusual, highlyunusual) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+          + " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         template.update(insertOp, in.tradeid, in.size, in.symbol, in.expiry, in.strike, in.type, in.getRoundedPrice(), in.side,
           in.exch, in.volume, in.condition, in.ivol, in.ivolchg, in.ivolchgpct, in.delta, in.deltadollar,
           in.spot, in.spotchg, in.vega, in.vegadollar, in.theta, in.bidprice, in.bidsize, in.askprice, in.asksize, in.notional,
           in.oi, in.sentiment, in.pc, in.thirdfriday ? 1 : 0, in.otm ? 1 : 0, in.events, in.section, subsector, in.timestamp,
-          in.timestamp, formatTimeInStupidOldFormat(in.timestamp));
+          in.timestamp, formatTimeInStupidOldFormat(in.timestamp), in.isUnusual(), in.isHighlyUnusual());
 
         this.broadcast(() -> getMarketData(in.timestamp, in.tradeid));
     }
@@ -221,6 +221,10 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
             marketData.setSubsector(Optional.ofNullable(rs.getString("subsector")).orElse(""));
             marketData.setSection(Optional.ofNullable(rs.getString("section")).orElse(""));
             marketData.setSector("");
+            marketData.setUnusual(Optional.ofNullable(rs.getObject("unusual")).map(Boolean.class::cast)
+              .orElse(false));
+            marketData.setHighlyUnusual(Optional.ofNullable(rs.getObject("highlyunusual")).map(Boolean.class::cast)
+              .orElse(false));
             return marketData;
         }
     }
