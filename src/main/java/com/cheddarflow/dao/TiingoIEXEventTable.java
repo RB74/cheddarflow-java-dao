@@ -60,7 +60,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
           + "subjectToNMSRule611) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         template.batchUpdate(insertOp, params);
 
-        this.logger.debug("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
+        this.logger.trace("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
     }
 
     private List<Object[]> getBatchParameters(List<TiingoIEXEvent> input) {
