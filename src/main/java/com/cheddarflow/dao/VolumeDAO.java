@@ -10,4 +10,5 @@ public interface VolumeDAO {
     VolumeData getVolumeData(Date d, String symbol);
     List<VolumeData> getVolumeData(Date from, Date to, boolean rollback);
     void setVolumeData(VolumeData in);
+    void persist(List<VolumeData> in);
 }

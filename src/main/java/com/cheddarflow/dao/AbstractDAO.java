@@ -54,12 +54,12 @@ abstract class AbstractDAO<T> {
         });
     }
 
-    protected void broadcast(Supplier<T> input) {
+    protected void broadcast(Supplier<?> input) {
         if (this.taskExecutor == null) {
             throw new IllegalStateException("TaskExecutor is null");
         }
         this.taskExecutor.execute(() -> {
-            final T in = input.get();
+            final Object in = input.get();
             if (in == null)
                 return;
             try {

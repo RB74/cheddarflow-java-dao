@@ -1,5 +1,6 @@
 package com.cheddarflow.dao;
 
+import com.cheddarflow.dao.event.VolumeUpdateEvent;
 import com.cheddarflow.eventbus.GlobalEventBus;
 import com.cheddarflow.jdbc.JdbcTemplates;
 import com.cheddarflow.jdbc.NoDataInRangeException;
@@ -275,6 +276,219 @@ public class VolumeTable extends AbstractDAO<VolumeData> implements VolumeDAO {
 
             if (differs) {
                 this.broadcast(() -> getVolumeData(format.format(in.getDate()), in.getSymbol()));
+            }
+        } catch (Exception e) {
+            this.logger.error("Could not update VolumeTable", e);
+        }
+    }
+
+    @Override
+    public void persist(List<VolumeData> list) {
+        SimpleDateFormat format = DateUtils.getDateFormat();
+
+        try {
+            final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(false);
+            final List<Object[]> inserts = new ArrayList<>(list.size());
+            final List<Object[]> updates = new ArrayList<>(list.size());
+            list.forEach(in -> {
+                final VolumeData existing = this.getVolumeData(in.getDate(), in.getSymbol());
+                if (existing != null && !existing.similarTo(in)) {
+                    updates.add(new Object[] {
+                      in.getSymbol(), format.format(in.getDate()), in.getOptionVolume(), in.getPuts(),
+                      in.getCalls(), in.getPctAdv(), in.getTwPctAdv(), in.getAdv(), in.getOptionOpenInt(), in.getVolumeOiPct(),
+                      in.getComments(), in.getSpot(), in.getSpotChg(), in.getBullishPct(), in.getNeutralPct(), in.getBearishPct(),
+                      in.getPutBidPct(), in.getPutMidPct(), in.getPutAskPct(), in.getCallBidPct(), in.getCallMidPct(), in.getCallAskPct(),
+                      in.getAtmIvol(), in.getAtmIvolChg(), in.getOiPuts(), in.getOiCalls(), in.getAvgTotalPuts(), in.getAvgTotalCalls(),
+                      in.getTimeWeight(), in.getVolume(), in.getAvgVolume(), in.getClose(), in.getChg(), in.getAtm1(), in.getAtm2(),
+                      in.getOiPutsChg(), in.getOiCallsChg(), in.getPutTrades(), in.getCallTrades(), in.getPutPrem(), in.getCallPrem(),
+                      in.getBullishCPrem(), in.getBearishCPrem(), in.getBearishPPrem(), in.getBullishPPrem(), in.getNetDelta(),
+                      in.getNetVega(), in.getBullishOnAsk(), in.getBearishOnAsk(), in.getVolatility20Day(), in.getVolatility60Day(),
+                      in.getVolatility120Day(), in.getSplitAdjClose(), in.getSplitAdjMult(), in.getAmex(), in.getArca(), in.getBxo(),
+                      in.getBzx(), in.getBox(), in.getCboe(), in.getC2(), in.getEdgx(), in.getGem(), in.getIse(), in.getMerc(),
+                      in.getMiax(), in.getNom(), in.getPearl(), in.getPhlx(), existing.getId()
+                    });
+                } else {
+                    inserts.add(new Object[] {
+                      in.getSymbol(), format.format(in.getDate()), in.getOptionVolume(), in.getPuts(),
+                      in.getCalls(), in.getPctAdv(), in.getTwPctAdv(), in.getAdv(), in.getOptionOpenInt(), in.getVolumeOiPct(),
+                      in.getComments(), in.getSpot(), in.getSpotChg(), in.getBullishPct(), in.getNeutralPct(), in.getBearishPct(),
+                      in.getPutBidPct(), in.getPutMidPct(), in.getPutAskPct(), in.getCallBidPct(), in.getCallMidPct(), in.getCallAskPct(),
+                      in.getAtmIvol(), in.getAtmIvolChg(), in.getOiPuts(), in.getOiCalls(), in.getAvgTotalPuts(), in.getAvgTotalCalls(),
+                      in.getTimeWeight(), in.getVolume(), in.getAvgVolume(), in.getClose(), in.getChg(), in.getAtm1(), in.getAtm2(),
+                      in.getOiPutsChg(), in.getOiCallsChg(), in.getPutTrades(), in.getCallTrades(), in.getPutPrem(), in.getCallPrem(),
+                      in.getBullishCPrem(), in.getBearishCPrem(), in.getBearishPPrem(), in.getBullishPPrem(), in.getNetDelta(),
+                      in.getNetVega(), in.getBullishOnAsk(), in.getBearishOnAsk(), in.getVolatility20Day(), in.getVolatility60Day(),
+                      in.getVolatility120Day(), in.getSplitAdjClose(), in.getSplitAdjMult(), in.getAmex(), in.getArca(), in.getBxo(),
+                      in.getBzx(), in.getBox(), in.getCboe(), in.getC2(), in.getEdgx(), in.getGem(), in.getIse(), in.getMerc(),
+                      in.getMiax(), in.getNom(), in.getPearl(), in.getPhlx()
+                    });
+                }
+            });
+
+            final List<VolumeData> dataToBroadcast = new ArrayList<>(list.size());
+            if (!updates.isEmpty()) {
+                template.batchUpdate("UPDATE volume set " +
+                  "symbol = ?, " +
+                  "date = ?, " +
+                  "option_volume = ?, " +
+                  "puts = ?, " +
+                  "calls = ?, " +
+                  "pct_adv = ?, " +
+                  "tw_pct_adv = ?, " +
+                  "adv = ?, " +
+                  "option_open_int = ?, " +
+                  "volume_oi_pct = ?, " +
+                  "comments = ?, " +
+                  "spot = ?, " +
+                  "spot_chg = ?, " +
+                  "bullish_pct = ?, " +
+                  "neutral_pct = ?, " +
+                  "bearish_pct = ?, " +
+                  "put_bid_pct = ?, " +
+                  "put_mid_pct = ?, " +
+                  "put_ask_pct = ?, " +
+                  "call_bid_pct = ?, " +
+                  "call_mid_pct = ?, " +
+                  "call_ask_pct = ?, " +
+                  "atm_ivol = ?, " +
+                  "atm_ivol_chg = ?, " +
+                  "oi_puts = ?, " +
+                  "oi_calls = ?, " +
+                  "avg_total_puts = ?, " +
+                  "avg_total_calls = ?, " +
+                  "time_weight = ?, " +
+                  "volume = ?, " +
+                  "avg_volume = ?, " +
+                  "close = ?, " +
+                  "chg = ?, " +
+                  "atm1 = ?, " +
+                  "atm2 = ?, " +
+                  "oi_puts_chg = ?, " +
+                  "oi_calls_chg = ?, " +
+                  "put_trades = ?, " +
+                  "call_trades = ?, " +
+                  "put_prem = ?, " +
+                  "call_prem = ?, " +
+                  "bullish_c_prem = ?, " +
+                  "bearish_c_prem = ?, " +
+                  "bearish_p_prem = ?, " +
+                  "bullish_p_prem = ?, " +
+                  "net_delta = ?, " +
+                  "net_vega = ?, " +
+                  "bullish_on_ask = ?, " +
+                  "bearish_on_ask = ?, " +
+                  "volatility20day = ?, " +
+                  "volatility60day = ?, " +
+                  "volatility120day = ?, " +
+                  "split_adj_close = ?, " +
+                  "split_adj_mult = ?, " +
+                  "amex = ?, " +
+                  "arca = ?, " +
+                  "bxo = ?, " +
+                  "bzx = ?, " +
+                  "box = ?, " +
+                  "cboe = ?, " +
+                  "c2 = ?, " +
+                  "edgx = ?, " +
+                  "gem = ?, " +
+                  "ise = ?, " +
+                  "merc = ?, " +
+                  "miax = ?, " +
+                  "nom = ?, " +
+                  "pearl = ?, " +
+                  "phlx = ? where id = ?", updates);
+                final List<String> ids = updates.stream().map(o -> o[o.length - 1]).map(Object::toString).distinct()
+                  .collect(Collectors.toList());
+                dataToBroadcast.addAll(template.query("select * from volume where id in (" + getParamString(ids) + ")",
+                  this.volumeDataRowMapper, ids.toArray(new String[0])));
+            }
+
+            if (!inserts.isEmpty()) {
+                template.batchUpdate("INSERT INTO volume " +
+                  "(symbol, " +
+                  "date, " +
+                  "option_volume, " +
+                  "puts, " +
+                  "calls, " +
+                  "pct_adv, " +
+                  "tw_pct_adv, " +
+                  "adv, " +
+                  "option_open_int, " +
+                  "volume_oi_pct, " +
+                  "comments, " +
+                  "spot, " +
+                  "spot_chg, " +
+                  "bullish_pct, " +
+                  "neutral_pct, " +
+                  "bearish_pct, " +
+                  "put_bid_pct, " +
+                  "put_mid_pct, " +
+                  "put_ask_pct, " +
+                  "call_bid_pct, " +
+                  "call_mid_pct, " +
+                  "call_ask_pct, " +
+                  "atm_ivol, " +
+                  "atm_ivol_chg, " +
+                  "oi_puts, " +
+                  "oi_calls, " +
+                  "avg_total_puts, " +
+                  "avg_total_calls, " +
+                  "time_weight, " +
+                  "volume, " +
+                  "avg_volume, " +
+                  "close, " +
+                  "chg, " +
+                  "atm1, " +
+                  "atm2, " +
+                  "oi_puts_chg, " +
+                  "oi_calls_chg, " +
+                  "put_trades, " +
+                  "call_trades, " +
+                  "put_prem, " +
+                  "call_prem, " +
+                  "bullish_c_prem, " +
+                  "bearish_c_prem, " +
+                  "bearish_p_prem, " +
+                  "bullish_p_prem, " +
+                  "net_delta, " +
+                  "net_vega, " +
+                  "bullish_on_ask, " +
+                  "bearish_on_ask, " +
+                  "volatility20day, " +
+                  "volatility60day, " +
+                  "volatility120day, " +
+                  "split_adj_close, " +
+                  "split_adj_mult, " +
+                  "amex, " +
+                  "arca, " +
+                  "bxo, " +
+                  "bzx, " +
+                  "box, " +
+                  "cboe, " +
+                  "c2, " +
+                  "edgx, " +
+                  "gem, " +
+                  "ise, " +
+                  "merc, " +
+                  "miax, " +
+                  "nom, " +
+                  "pearl, " +
+                  "phlx)" +
+                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                  " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                  " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?," +
+                  " ?, ?, ?, ?, ?, ?, ?, ?, ?)", inserts);
+                inserts.forEach(insert -> {
+                    final String symbol = insert[0].toString();
+                    final String dt = insert[1].toString();
+                    final VolumeData data = getVolumeData(dt, symbol);
+                    if (data != null)
+                        dataToBroadcast.add(data);
+                });
+            }
+
+            if (!dataToBroadcast.isEmpty()) {
+                this.broadcast(() -> new VolumeUpdateEvent(dataToBroadcast));
             }
         } catch (Exception e) {
             this.logger.error("Could not update VolumeTable", e);
