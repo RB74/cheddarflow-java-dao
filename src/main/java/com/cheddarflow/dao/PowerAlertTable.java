@@ -73,8 +73,24 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     }
 
     @Override
+    public void save(PowerAlert powerAlert) {
+        if (powerAlert.getId().isEmpty()) {
+            final Object[] params = this.getInsertParams(powerAlert);
+            JdbcTemplates.getInstance().getTemplate(false).update(INSERT_SQL, params);
+        } else {
+            final Object[] params = this.getUpdateParams(powerAlert);
+            JdbcTemplates.getInstance().getTemplate(false).update(INSERT_SQL, params);
+        }
+    }
+
+    @Override
     public void bulkInsert(List<PowerAlert> powerAlerts) {
-        final List<Object[]> params = powerAlerts.stream().map(pa -> new Object[] {
+        final List<Object[]> params = powerAlerts.stream().map(this::getInsertParams).collect(Collectors.toList());
+        JdbcTemplates.getInstance().getTemplate(false).batchUpdate(INSERT_SQL, params);
+    }
+
+    private Object[] getInsertParams(PowerAlert pa) {
+        return new Object[] {
           pa.getSymbol(),
           pa.getAlertDate(),
           pa.getCreatedOn(),
@@ -92,14 +108,17 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getNumUnusual().orElse(null),
           pa.getNumHighlyUnusual().orElse(null),
           pa.getNumDarkPool().orElse(null)
-        }).collect(Collectors.toList());
-
-        JdbcTemplates.getInstance().getTemplate(false).batchUpdate(INSERT_SQL, params);
+        };
     }
 
     @Override
     public void bulkUpdate(List<PowerAlert> powerAlerts) {
-        final List<Object[]> params = powerAlerts.stream().map(pa -> new Object[] {
+        final List<Object[]> params = powerAlerts.stream().map(this::getUpdateParams).collect(Collectors.toList());
+        JdbcTemplates.getInstance().getTemplate(false).batchUpdate(UPDATE_SQL, params);
+    }
+
+    private Object[] getUpdateParams(PowerAlert pa) {
+        return new Object[] {
           pa.getUpdatedOn(),
           pa.getActiveContract().map(OptionsContract::getExpiration).orElse(null),
           pa.getActiveContract().map(OptionsContract::getStrike).orElse(null),
@@ -115,8 +134,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getNumHighlyUnusual().orElse(null),
           pa.getNumDarkPool().orElse(null),
           pa.getId().orElse(0L)
-        }).collect(Collectors.toList());
-
-        JdbcTemplates.getInstance().getTemplate(false).batchUpdate(UPDATE_SQL, params);
+        };
     }
 }

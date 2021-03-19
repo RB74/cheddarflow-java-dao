@@ -10,6 +10,7 @@ public interface PowerAlertDAO {
 
     List<PowerAlert> findBySymbol(String symbol);
     Optional<PowerAlert> findBySymbolAndDate(String symbol, Date alertDate);
+    void save(PowerAlert powerAlert);
     void bulkInsert(List<PowerAlert> powerAlerts);
     void bulkUpdate(List<PowerAlert> powerAlerts);
 }
