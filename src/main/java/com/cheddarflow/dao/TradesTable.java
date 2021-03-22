@@ -7,6 +7,8 @@ import com.cheddarflow.model.PutCallSummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -152,7 +154,56 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
           in.oi, in.sentiment, in.pc, in.thirdfriday ? 1 : 0, in.otm ? 1 : 0, in.events, in.section, subsector, in.timestamp,
           in.timestamp, formatTimeInStupidOldFormat(in.timestamp), in.isUnusual(), in.isHighlyUnusual());
 
-        this.broadcast(() -> getMarketData(in.timestamp, in.tradeid));
+        this.broadcast(() -> {
+            try {
+                return getMarketData(in);
+            } catch (ParseException e) {
+                logger.error("Error broadcasting {}", in, e);
+            }
+            return in;
+        });
+    }
+
+    private MarketData getMarketData(MarketDataInput in) throws ParseException {
+        final MarketData marketData = new MarketData();
+        marketData.setSentiment(in.sentiment);
+        marketData.setSize(in.size);
+        marketData.setSymbol(in.symbol);
+        marketData.setExpiry(new SimpleDateFormat("yyyy-MM-dd").parse(in.expiry));
+        marketData.setStrike(in.strike);
+        marketData.setType(in.type);
+        marketData.setPrice(in.price);
+        marketData.setOptionType(in.pc);
+        marketData.setSide(in.side);
+        marketData.setExch(in.exch);
+        marketData.setTimestamp(in.timestamp);
+        marketData.setVolume(in.volume);
+        marketData.setCondition(in.condition);
+        marketData.setThirdFriday(in.thirdfriday);
+        marketData.setIvol(in.ivol);
+        marketData.setIvolChg(in.ivolchg);
+        marketData.setIvolChgPct(in.ivolchgpct);
+        marketData.setDelta(in.delta);
+        marketData.setDeltaDollar(in.deltadollar);
+        marketData.setSpot(in.spot);
+        marketData.setSpotChg(in.spotchg);
+        marketData.setVega(in.vega);
+        marketData.setVegaDollar(in.vegadollar);
+        marketData.setTheta(in.theta);
+        marketData.setEvents(in.events);
+        marketData.setBidPrice(in.bidprice);
+        marketData.setBidSize(in.bidsize);
+        marketData.setAskPrice(in.askprice);
+        marketData.setAskSize(in.asksize);
+        marketData.setNotional(in.notional);
+        marketData.setOi(in.oi);
+        marketData.setOutOfMoney(in.otm);
+        marketData.setSubsector("");
+        marketData.setSection(in.section);
+        marketData.setSector("");
+        marketData.setUnusual(in.isUnusual());
+        marketData.setHighlyUnusual(in.isHighlyUnusual());
+        return marketData;
     }
 
     private double formatTimeInStupidOldFormat(Date date) {
