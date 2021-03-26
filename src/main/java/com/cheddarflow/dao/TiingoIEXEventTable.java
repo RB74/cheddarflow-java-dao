@@ -1,5 +1,6 @@
 package com.cheddarflow.dao;
 
+import com.cheddarflow.dao.dto.LatestIEXData;
 import com.cheddarflow.jdbc.JdbcTemplates;
 import com.cheddarflow.jdbc.NoDataInRangeException;
 import com.cheddarflow.model.TiingoEventType;
@@ -17,6 +18,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -43,6 +45,29 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
       .withOddLot(rs.getInt("oddLot") == 1)
       .withSubjectToNMSRule611(rs.getInt("subjectToNMSRule611") == 1)
       .build();
+
+    private final RowMapper<LatestIEXData> latestRowMapper = (rs, i) -> {
+        final TiingoIEXEvent event = TiingoIEXEvent.newBuilder()
+          .withId(rs.getLong("id"))
+          .withSymbol(rs.getString("symbol"))
+          .withTiingoEventType(TiingoEventType.valueOf(rs.getString("tiingoEventType")))
+          .withCreatedOn(rs.getTimestamp("createdOn"))
+          .withBidSize(rs.getInt("bidSize"))
+          .withBidPrice(rs.getFloat("bidPrice"))
+          .withMidPrice(rs.getFloat("midPrice"))
+          .withAskPrice(rs.getFloat("askPrice"))
+          .withAskSize(rs.getInt("askSize"))
+          .withLastPrice(rs.getFloat("lastPrice"))
+          .withLastSize(rs.getInt("lastSize"))
+          .withHalted(rs.getInt("halted") == 1)
+          .withAfterHours(rs.getInt("afterHours") == 1)
+          .withIntermarketSweepOrder(rs.getInt("intermarketSweepOrder") == 1)
+          .withOddLot(rs.getInt("oddLot") == 1)
+          .withSubjectToNMSRule611(rs.getInt("subjectToNMSRule611") == 1)
+          .build();
+        final float lastPrice = rs.getFloat("prevClose");
+        return new LatestIEXData(event, lastPrice);
+    };
 
     public TiingoIEXEventTable() {
         super(null);
@@ -126,6 +151,16 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
               " union (select * from tiingo_iex_data where symbol = ? order by createdOn desc limit 1) ".repeat(size - 1));
         }
         return template.query(builder.toString(), this.rowMapper, symbols.toArray(new Object[0]));
+    }
+
+    @Override
+    public LatestIEXData findLatestObject(String symbol) {
+        final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
+
+        final String sql = "select a.*, (select b.lastPrice from tiingo_iex_data b where b.symbol = ? and b.createdOn < "
+          + "DATE_FORMAT(a.createdOn,'%Y-%m-%d 00:00:00') order by b.createdOn desc limit 1) as prevClose from tiingo_iex_data a "
+          + "where a.symbol = ? order by a.createdOn desc limit 1";
+        return template.queryForObject(sql, this.latestRowMapper, symbol, symbol);
     }
 
     @Override

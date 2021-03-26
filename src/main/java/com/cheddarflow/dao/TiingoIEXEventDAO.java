@@ -1,5 +1,6 @@
 package com.cheddarflow.dao;
 
+import com.cheddarflow.dao.dto.LatestIEXData;
 import com.cheddarflow.model.TiingoIEXEvent;
 
 import java.util.Date;
@@ -12,5 +13,6 @@ public interface TiingoIEXEventDAO {
     List<TiingoIEXEvent> listObjects(Date from, Date to, List<String> symbols);
     List<TiingoIEXEvent> listObjects(Date from, Date to, String symbol, boolean rollback, int limit);
     List<TiingoIEXEvent> mostRecentObjects(List<String> symbols);
+    LatestIEXData findLatestObject(String symbol);
     long getMaxTimestamp();
 }
