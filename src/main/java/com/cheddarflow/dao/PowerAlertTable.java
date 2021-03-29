@@ -101,15 +101,15 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getActiveContract().map(OptionsContract::getType).map(OptionType::toDbString).orElse(null),
           pa.isBroken(),
           pa.getStrength(),
-          pa.getStrengthIncrease().orElse(null),
+          pa.getStrengthIncrease().orElse(0),
           pa.getFirstSpot(),
           pa.getSpot(),
-          pa.getFirstVolume().orElse(null),
-          pa.getVolumeDelta().orElse(null),
+          pa.getFirstVolume().orElse(0f),
+          pa.getVolumeDelta().orElse(0f),
           pa.getNumCalls(),
-          pa.getNumUnusual().orElse(null),
-          pa.getNumHighlyUnusual().orElse(null),
-          pa.getNumDarkPool().orElse(null)
+          pa.getNumUnusual().orElse(0),
+          pa.getNumHighlyUnusual().orElse(0),
+          pa.getNumDarkPool().orElse(0)
         };
     }
 
