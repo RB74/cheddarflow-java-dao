@@ -3,7 +3,9 @@ package com.cheddarflow.dao;
 import com.cheddarflow.jdbc.JdbcTemplates;
 import com.cheddarflow.model.SignaturePrint;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -22,6 +24,13 @@ public class SignaturePrintTable implements SignaturePrintDAO {
     public List<SignaturePrint> getSignaturePrints() {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
         return template.query("select symbol, occurrence, printDate from signature_print", this.rowMapper);
+    }
+
+    @Override
+    public Optional<SignaturePrint> findBySymbolAndDate(String symbol, Date printDate) {
+        return JdbcTemplates.getInstance().getTemplate(true)
+          .query("select * from signature_print where symbol = ? and printDate = ? limit 1", this.rowMapper, symbol, printDate)
+          .stream().findFirst();
     }
 
     @Override
