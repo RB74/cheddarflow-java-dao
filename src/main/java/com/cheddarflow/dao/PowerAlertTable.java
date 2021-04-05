@@ -7,6 +7,7 @@ import com.cheddarflow.model.OptionType;
 import com.cheddarflow.model.OptionsContract;
 import com.cheddarflow.model.PowerAlert;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -77,9 +78,11 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     public void save(PowerAlert powerAlert) {
         if (powerAlert.getId().isEmpty()) {
             final Object[] params = this.getInsertParams(powerAlert);
+            logger.trace("Insert params: {}", Arrays.toString(params));
             JdbcTemplates.getInstance().getTemplate(false).update(INSERT_SQL, params);
         } else {
             final Object[] params = this.getUpdateParams(powerAlert);
+            logger.trace("Update params: {}", Arrays.toString(params));
             JdbcTemplates.getInstance().getTemplate(false).update(UPDATE_SQL, params);
         }
     }
