@@ -21,9 +21,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAlertDAO {
 
-    private static final String INSERT_SQL = "insert into power_alerts (id, symbol, alertDate, createdOn, updatedOn, "
+    private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
       + "contractExpiration, contractStrike, contractType, broken, strength, strengthIncrease, firstSpot, spot, firstVolume, volumeDelta, "
-      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "update power_alerts set updatedOn = ?, contractExpiration = ?, contractStrike = ?, "
       + "contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, spot = ?, firstVolume = ?, volumeDelta = ?, "
       + "numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
