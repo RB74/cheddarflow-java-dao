@@ -157,9 +157,9 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     public LatestIEXData findLatestObject(String symbol) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
-        final String sql = "select a.*, (select b.lastPrice from tiingo_iex_data b where b.symbol = ? and b.createdOn < "
-          + "DATE_FORMAT(a.createdOn,'%Y-%m-%d 00:00:00') order by b.createdOn desc limit 1) as prevClose from tiingo_iex_data a "
-          + "where a.symbol = ? order by a.createdOn desc limit 1";
+        final String sql = "select t.*, (select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn < "
+          + "DATE(t.createdOn) ORDER BY b.createdOn DESC LIMIT 1) as prevClose from (SELECT a.*  FROM tiingo_iex_data a "
+          + "WHERE a.symbol = ? ORDER BY a.createdOn DESC LIMIT 1) t";
         return template.queryForObject(sql, this.latestRowMapper, symbol, symbol);
     }
 
