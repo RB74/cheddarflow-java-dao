@@ -159,8 +159,9 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
 
         final String sql = "select t.*, (select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn < "
           + "DATE(t.createdOn) and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1) as prevClose from (SELECT a.* "
-          + "FROM tiingo_iex_data a WHERE a.symbol = ? ORDER BY a.createdOn DESC LIMIT 1) t";
-        return template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name(), symbol);
+          + "FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1) t";
+        return template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name(), symbol,
+          TiingoEventType.LAST_TRADE.name());
     }
 
     @Override
