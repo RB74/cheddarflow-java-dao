@@ -23,10 +23,10 @@ import org.springframework.stereotype.Repository;
 public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAlertDAO {
 
     private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
-      + "contractExpiration, contractStrike, contractType, broken, strength, strengthIncrease, firstSpot, spot, firstVolume, volumeDelta, "
-      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      + "contractExpiration, contractStrike, contractType, broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, "
+      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "update power_alerts set updatedOn = ?, contractExpiration = ?, contractStrike = ?, "
-      + "contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, spot = ?, firstVolume = ?, volumeDelta = ?, "
+      + "contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, volumeDelta = ?, "
       + "numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
 
     private final RowMapper<PowerAlert> mapper = (rs, i) -> {
@@ -49,7 +49,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           .numHighlyUnusual(Optional.ofNullable((Integer)rs.getObject("numHighlyUnusual")))
           .numDarkPool(Optional.ofNullable((Integer)rs.getObject("numDarkPool")))
           .firstSpot(rs.getFloat("firstSpot"))
-          .spot(rs.getFloat("spot"))
           .strength(rs.getInt("strength"))
           .strengthIncrease(Optional.ofNullable((Integer)rs.getObject("strengthIncrease")))
           .activeContract(contract)
@@ -106,7 +105,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getStrength(),
           pa.getStrengthIncrease().orElse(0),
           pa.getFirstSpot(),
-          pa.getSpot(),
           pa.getFirstVolume().orElse(0f),
           pa.getVolumeDelta().orElse(0f),
           pa.getNumCalls(),
@@ -132,7 +130,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getStrength(),
           pa.getStrengthIncrease().orElse(0),
           pa.getFirstSpot(),
-          pa.getSpot(),
           pa.getFirstVolume().orElse(0f),
           pa.getVolumeDelta().orElse(0f),
           pa.getNumCalls(),
