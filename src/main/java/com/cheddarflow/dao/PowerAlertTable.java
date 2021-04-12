@@ -7,6 +7,7 @@ import com.cheddarflow.model.OptionType;
 import com.cheddarflow.model.OptionsContract;
 import com.cheddarflow.model.PowerAlert;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -58,6 +59,19 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     @Autowired
     public PowerAlertTable(@Qualifier("normalTaskExecutor") ThreadPoolTaskExecutor taskExecutor) {
         super(taskExecutor);
+    }
+
+    @Override
+    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to) {
+        final List<Object> params = new ArrayList<>(3);
+        params.add(from);
+        params.add(to);
+        String sql = "select * power_alerts where alertDate between ? and ? ";
+        if (symbol != null && !symbol.isBlank()) {
+            sql += " and symbol = ?";
+            params.add(symbol);
+        }
+        return JdbcTemplates.getInstance().getTemplate(true).query(sql, this.mapper, params.toArray(new Object[0]));
     }
 
     @Override
