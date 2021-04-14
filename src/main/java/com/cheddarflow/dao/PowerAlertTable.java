@@ -66,7 +66,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         final List<Object> params = new ArrayList<>(3);
         params.add(from);
         params.add(to);
-        String sql = "select * power_alerts where alertDate between ? and ? ";
+        String sql = "select * from power_alerts where alertDate between ? and ? ";
         if (symbol != null && !symbol.isBlank()) {
             sql += " and symbol = ?";
             params.add(symbol);
