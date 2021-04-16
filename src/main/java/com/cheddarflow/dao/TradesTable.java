@@ -129,14 +129,14 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
     }
 
     @Override
-    public void setMarketData(MarketDataInput in) {
-        if (in.side <= -2) return;
+    public boolean setMarketData(MarketDataInput in) {
+        if (in.side <= -2) return false;
 
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(false);
         final List<Integer> existing = template.query("select id from trades where timestamp = ? and tradeid = ?",
           new Object[] { in.timestamp, in.tradeid }, (rs, i) -> rs.getInt(1));
         if (!existing.isEmpty())
-            return;
+            return false;
 
         final List<String> subsectors = template.queryForList("select subsector from sectors where symbol = ?",
           new Object[] { in.symbol }, String.class);
@@ -162,6 +162,7 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
             }
             return in;
         });
+        return true;
     }
 
     private MarketData getMarketData(MarketDataInput in) throws ParseException {

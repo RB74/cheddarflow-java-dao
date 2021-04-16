@@ -12,6 +12,6 @@ public interface TradesDAO {
     PutCallSummary getPutCallSummary(Date from, Date to, String symbolSearch);
     MarketData getMarketData(Date date, int tradeid);
     List<MarketData> getMarketData(Date from, Date to, String symbol, int limit);
-    void setMarketData(MarketDataInput in);
+    boolean setMarketData(MarketDataInput in);
     long getMaxTimestamp();
 }
