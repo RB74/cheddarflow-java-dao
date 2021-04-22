@@ -62,11 +62,13 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     }
 
     @Override
-    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to) {
+    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength) {
         final List<Object> params = new ArrayList<>(3);
         params.add(from);
         params.add(to);
-        String sql = "select * from power_alerts where alertDate between ? and ? ";
+        params.add(minStrength);
+        params.add(minStrength >= 35 ? 4 : 3);
+        String sql = "select * from power_alerts where alertDate between ? and ? and strength >= ? and numCalls >= ?";
         if (symbol != null && !symbol.isBlank()) {
             sql += " and symbol = ?";
             params.add(symbol);

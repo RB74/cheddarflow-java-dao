@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface PowerAlertDAO {
 
-    List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to);
+    List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength);
     List<PowerAlert> findBySymbol(String symbol);
     Optional<PowerAlert> findBySymbolAndDate(String symbol, Date alertDate);
     void save(PowerAlert powerAlert);
