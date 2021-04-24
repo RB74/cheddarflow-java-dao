@@ -64,6 +64,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
           .withIntermarketSweepOrder(rs.getInt("intermarketSweepOrder") == 1)
           .withOddLot(rs.getInt("oddLot") == 1)
           .withSubjectToNMSRule611(rs.getInt("subjectToNMSRule611") == 1)
+          .withHash(rs.getInt("hash"))
           .build();
         final float lastPrice = rs.getFloat("prevClose");
         return new LatestIEXData(event, lastPrice);
@@ -82,7 +83,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(false);
         final String insertOp = "insert ignore into tiingo_iex_data (symbol, tiingoEventType, createdOn, bidSize, bidPrice, "
           + "midPrice, askPrice, askSize, lastPrice, lastSize, halted, afterHours, intermarketSweepOrder, oddLot, "
-          + "subjectToNMSRule611) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+          + "subjectToNMSRule611, hash) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         template.batchUpdate(insertOp, params);
 
         this.logger.trace("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
@@ -106,7 +107,8 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
             i.isAfterHours() ? 1 : 0,
             i.isIntermarketSweepOrder() ? 1 : 0,
             i.isOddLot() ? 1 : 0,
-            i.isSubjectToNMSRule611() ? 1 : 0
+            i.isSubjectToNMSRule611() ? 1 : 0,
+            i.getHash()
           })
         );
         return params;
@@ -157,10 +159,19 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     public LatestIEXData findLatestObject(String symbol) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
-        final String sql = "select t.*, (select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn < "
-          + "DATE(t.createdOn) and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1) as prevClose from (SELECT a.* "
+        final Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        final Date end = calendar.getTime();
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        final Date start = calendar.getTime();
+
+        final String sql = "select t.*, (select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between "
+          + "? and ? and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1) as prevClose from (SELECT a.* "
           + "FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1) t";
-        return template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name(), symbol,
+        return template.queryForObject(sql, this.latestRowMapper, symbol, start, end, TiingoEventType.LAST_TRADE.name(), symbol,
           TiingoEventType.LAST_TRADE.name());
     }
 
