@@ -1,6 +1,7 @@
 package com.cheddarflow.dao;
 
 import com.cheddarflow.jdbc.JdbcTemplates;
+import com.cheddarflow.jdbc.NoDataInRangeException;
 import com.cheddarflow.model.ImmutableOptionsContract;
 import com.cheddarflow.model.ImmutablePowerAlert;
 import com.cheddarflow.model.OptionType;
@@ -9,13 +10,17 @@ import com.cheddarflow.model.PowerAlert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Repository;
@@ -62,8 +67,36 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     }
 
     @Override
-    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength) {
-        final List<Object> params = new ArrayList<>(3);
+    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength, boolean rollback) {
+        final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
+        final List<PowerAlert> data = this.doFindBySymbolAndDateRange(symbol, from, to, minStrength, template);
+        if (!data.isEmpty() || !rollback)
+            return data;
+
+        final Date rollbackDate = new Date(from.getTime() - TimeUnit.DAYS.toMillis(7));
+        try {
+            Date minDate = template.queryForObject("select max(createdOn) from power_alerts"
+              + " where createdOn >= ?", new Object[] { rollbackDate }, Date.class);
+            if (minDate != null) {
+                Calendar c = Calendar.getInstance();
+                c.setTime(minDate);
+                c.set(Calendar.HOUR_OF_DAY, 0);
+                c.set(Calendar.MINUTE, 0);
+                c.set(Calendar.SECOND, 0);
+                c.set(Calendar.MILLISECOND, 0);
+                minDate = c.getTime();
+                c.add(Calendar.MILLISECOND, (int)TimeUnit.DAYS.toMillis(1));
+                return this.doFindBySymbolAndDateRange(symbol, minDate, c.getTime(), minStrength, template);
+            } else {
+                throw new NoDataInRangeException("No data found");
+            }
+        } catch (EmptyResultDataAccessException e) {
+            throw new NoDataInRangeException("No data found");
+        }
+    }
+
+    private List<PowerAlert> doFindBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength, JdbcTemplate template) {
+        final List<Object> params = new ArrayList<>(5);
         params.add(from);
         params.add(to);
         params.add(minStrength);
@@ -73,7 +106,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
             sql += " and symbol = ?";
             params.add(symbol);
         }
-        return JdbcTemplates.getInstance().getTemplate(true).query(sql, this.mapper, params.toArray(new Object[0]));
+        return template.query(sql, this.mapper, params.toArray(new Object[0]));
     }
 
     @Override
