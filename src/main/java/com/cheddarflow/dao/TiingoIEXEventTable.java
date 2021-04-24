@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.checkerframework.checker.units.qual.s;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -75,18 +78,19 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     }
 
     @Override
-    public void bulkInsert(List<TiingoIEXEvent> in) {
+    public int bulkInsert(List<TiingoIEXEvent> in) {
         final List<Object[]> params = this.getBatchParameters(in);
         if (params.isEmpty())
-            return;
+            return 0;
 
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(false);
         final String insertOp = "insert ignore into tiingo_iex_data (symbol, tiingoEventType, createdOn, bidSize, bidPrice, "
           + "midPrice, askPrice, askSize, lastPrice, lastSize, halted, afterHours, intermarketSweepOrder, oddLot, "
           + "subjectToNMSRule611, hash) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        template.batchUpdate(insertOp, params);
+        final int[] num = template.batchUpdate(insertOp, params);
 
         this.logger.trace("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
+        return Stream.of(num).flatMapToInt(IntStream::of).sum();
     }
 
     private List<Object[]> getBatchParameters(List<TiingoIEXEvent> input) {
