@@ -47,6 +47,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
       .withIntermarketSweepOrder(rs.getInt("intermarketSweepOrder") == 1)
       .withOddLot(rs.getInt("oddLot") == 1)
       .withSubjectToNMSRule611(rs.getInt("subjectToNMSRule611") == 1)
+      .withHash(rs.getInt("hash"))
       .build();
 
     private final RowMapper<LatestIEXData> latestRowMapper = (rs, i) -> {
