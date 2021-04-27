@@ -31,9 +31,9 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
       + "contractExpiration, contractStrike, contractType, broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, "
       + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "update power_alerts set updatedOn = ?, contractExpiration = ?, contractStrike = ?, "
-      + "contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, volumeDelta = ?, "
-      + "numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
+    private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, contractExpiration = ?, "
+      + "contractStrike = ?, contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, "
+      + "volumeDelta = ?, numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
 
     private final RowMapper<PowerAlert> mapper = (rs, i) -> {
         final String symbol = rs.getString("symbol");
@@ -171,6 +171,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
 
     private Object[] getUpdateParams(PowerAlert pa) {
         return new Object[] {
+          pa.getCreatedOn(),
           pa.getUpdatedOn(),
           pa.getActiveContract().map(OptionsContract::getExpiration).orElse(null),
           pa.getActiveContract().map(OptionsContract::getStrike).orElse(null),
