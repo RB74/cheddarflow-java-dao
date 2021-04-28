@@ -70,8 +70,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
           .withSubjectToNMSRule611(rs.getInt("subjectToNMSRule611") == 1)
           .withHash(rs.getInt("hash"))
           .build();
-        final float lastPrice = rs.getFloat("prevClose");
-        return new LatestIEXData(event, lastPrice);
+        return new LatestIEXData(event, 0f);
     };
 
     public TiingoIEXEventTable() {
@@ -164,7 +163,14 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     public LatestIEXData findLatestObject(String symbol) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
+        String sql = "SELECT a.* FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1";
+        final LatestIEXData data = template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name());
+        if (data == null) {
+            return null;
+        }
+
         final Calendar calendar = Calendar.getInstance();
+        calendar.setTime(data.getIexEvent().getCreatedOn());
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -173,11 +179,13 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         calendar.add(Calendar.DAY_OF_YEAR, -1);
         final Date start = calendar.getTime();
 
-        final String sql = "select t.*, (select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between "
-          + "? and ? and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1) as prevClose from (SELECT a.* "
-          + "FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1) t";
-        return template.queryForObject(sql, this.latestRowMapper, symbol, start, end, TiingoEventType.LAST_TRADE.name(), symbol,
-          TiingoEventType.LAST_TRADE.name());
+        sql = "select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between ? and ? "
+          + "and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1";
+        final Float prevClose = template.queryForObject(sql, Float.class, symbol, start, end, TiingoEventType.LAST_TRADE.name());
+        if (prevClose != null) {
+            data.setPrevClose(prevClose);
+        }
+        return data;
     }
 
     @Override
