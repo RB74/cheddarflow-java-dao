@@ -29,18 +29,14 @@ import org.springframework.stereotype.Repository;
 public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAlertDAO {
 
     private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
-      + "contractExpiration, contractStrike, contractType, broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, "
-      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, contractExpiration = ?, "
-      + "contractStrike = ?, contractType = ?, broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, "
+      + "broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, "
+      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, "
+      + "broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, "
       + "volumeDelta = ?, numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
 
     private final RowMapper<PowerAlert> mapper = (rs, i) -> {
         final String symbol = rs.getString("symbol");
-        final Date contractExp = rs.getDate("contractExpiration");
-        final Optional<OptionsContract> contract = contractExp == null ? Optional.empty()
-          : Optional.of(ImmutableOptionsContract.builder().expiration(contractExp).strike(rs.getFloat("contractStrike"))
-            .type(OptionType.forString(rs.getString("contractType"))).symbol(symbol).build());
         return ImmutablePowerAlert.builder()
           .id(rs.getLong("id"))
           .symbol(symbol)
@@ -57,7 +53,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           .firstSpot(rs.getFloat("firstSpot"))
           .strength(rs.getInt("strength"))
           .strengthIncrease(Optional.ofNullable((Integer)rs.getObject("strengthIncrease")))
-          .activeContract(contract)
           .build();
     };
 
@@ -147,9 +142,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getAlertDate(),
           pa.getCreatedOn(),
           pa.getUpdatedOn(),
-          pa.getActiveContract().map(OptionsContract::getExpiration).orElse(null),
-          pa.getActiveContract().map(OptionsContract::getStrike).orElse(null),
-          pa.getActiveContract().map(OptionsContract::getType).map(OptionType::toDbString).orElse(null),
           pa.isBroken(),
           pa.getStrength(),
           pa.getStrengthIncrease().orElse(0),
@@ -173,9 +165,6 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         return new Object[] {
           pa.getCreatedOn(),
           pa.getUpdatedOn(),
-          pa.getActiveContract().map(OptionsContract::getExpiration).orElse(null),
-          pa.getActiveContract().map(OptionsContract::getStrike).orElse(null),
-          pa.getActiveContract().map(OptionsContract::getType).map(OptionType::toDbString).orElse(null),
           pa.isBroken(),
           pa.getStrength(),
           pa.getStrengthIncrease().orElse(0),
