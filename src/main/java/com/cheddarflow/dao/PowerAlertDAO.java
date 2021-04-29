@@ -14,4 +14,5 @@ public interface PowerAlertDAO {
     void save(PowerAlert powerAlert);
     void bulkInsert(List<PowerAlert> powerAlerts);
     void bulkUpdate(List<PowerAlert> powerAlerts);
+    void deleteBefore(Date cutoff);
 }

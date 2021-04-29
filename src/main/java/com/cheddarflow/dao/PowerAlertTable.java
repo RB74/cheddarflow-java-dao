@@ -2,10 +2,7 @@ package com.cheddarflow.dao;
 
 import com.cheddarflow.jdbc.JdbcTemplates;
 import com.cheddarflow.jdbc.NoDataInRangeException;
-import com.cheddarflow.model.ImmutableOptionsContract;
 import com.cheddarflow.model.ImmutablePowerAlert;
-import com.cheddarflow.model.OptionType;
-import com.cheddarflow.model.OptionsContract;
 import com.cheddarflow.model.PowerAlert;
 
 import java.util.ArrayList;
@@ -34,6 +31,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, "
       + "broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, "
       + "volumeDelta = ?, numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
+    private static final String DELETE_SQL = "delete from power_alerts where createdOn < ?";
 
     private final RowMapper<PowerAlert> mapper = (rs, i) -> {
         final String symbol = rs.getString("symbol");
@@ -159,6 +157,11 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     public void bulkUpdate(List<PowerAlert> powerAlerts) {
         final List<Object[]> params = powerAlerts.stream().map(this::getUpdateParams).collect(Collectors.toList());
         JdbcTemplates.getInstance().getTemplate(false).batchUpdate(UPDATE_SQL, params);
+    }
+
+    @Override
+    public void deleteBefore(Date cutoff) {
+        JdbcTemplates.getInstance().getTemplate(false).update(DELETE_SQL, cutoff);
     }
 
     private Object[] getUpdateParams(PowerAlert pa) {
