@@ -26,11 +26,11 @@ import org.springframework.stereotype.Repository;
 public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAlertDAO {
 
     private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
-      + "broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, "
-      + "numCalls, numUnusual, numHighlyUnusual, numDarkPool) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      + "broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, numCalls, numUnusual, numHighlyUnusual, "
+      + "numDarkPool, numImpliedVolatilityMatches) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, "
-      + "broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, "
-      + "volumeDelta = ?, numCalls = ?, numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ? where id = ?";
+      + "broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, volumeDelta = ?, numCalls = ?, "
+      + "numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ?, numImpliedVolatilityMatches = ? where id = ?";
     private static final String DELETE_SQL = "delete from power_alerts where createdOn < ?";
 
     private final RowMapper<PowerAlert> mapper = (rs, i) -> {
@@ -51,6 +51,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           .firstSpot(rs.getFloat("firstSpot"))
           .strength(rs.getInt("strength"))
           .strengthIncrease(Optional.ofNullable((Integer)rs.getObject("strengthIncrease")))
+          .numImpliedVolatilityMatches(Optional.ofNullable((Integer)rs.getObject("numImpliedVolatilityMatches")))
           .build();
     };
 
@@ -149,7 +150,8 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getNumCalls(),
           pa.getNumUnusual().orElse(0),
           pa.getNumHighlyUnusual().orElse(0),
-          pa.getNumDarkPool().orElse(0)
+          pa.getNumDarkPool().orElse(0),
+          pa.getNumImpliedVolatilityMatches().orElse(0)
         };
     }
 
@@ -178,6 +180,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getNumUnusual().orElse(0),
           pa.getNumHighlyUnusual().orElse(0),
           pa.getNumDarkPool().orElse(0),
+          pa.getNumImpliedVolatilityMatches().orElse(0),
           pa.getId().orElse(0L)
         };
     }
