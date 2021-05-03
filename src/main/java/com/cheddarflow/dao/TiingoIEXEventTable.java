@@ -164,8 +164,13 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
         String sql = "SELECT a.* FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1";
-        final LatestIEXData data = template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name());
-        if (data == null) {
+        final LatestIEXData data;
+        try {
+            data = template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name());
+            if (data == null) {
+                return null;
+            }
+        } catch (EmptyResultDataAccessException e) {
             return null;
         }
 
@@ -181,10 +186,14 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
 
         sql = "select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between ? and ? "
           + "and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1";
-        final Float prevClose = template.queryForObject(sql, Float.class, symbol, start, end, TiingoEventType.LAST_TRADE.name());
-        if (prevClose != null) {
-            data.setPrevClose(prevClose);
-        }
+        try {
+            final Float prevClose =
+              template.queryForObject(sql, Float.class, symbol, start, end, TiingoEventType.LAST_TRADE.name());
+            if (prevClose != null) {
+                data.setPrevClose(prevClose);
+            }
+        } catch (EmptyResultDataAccessException ignored) {}
+
         return data;
     }
 
