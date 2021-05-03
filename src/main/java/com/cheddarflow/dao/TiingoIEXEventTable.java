@@ -181,7 +181,11 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         final Date end = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
+            calendar.add(Calendar.DAY_OF_YEAR, -3);
+        } else {
+            calendar.add(Calendar.DAY_OF_YEAR, -1);
+        }
         final Date start = calendar.getTime();
 
         sql = "select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between ? and ? "
