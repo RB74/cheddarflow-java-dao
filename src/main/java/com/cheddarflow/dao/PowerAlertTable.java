@@ -26,10 +26,10 @@ import org.springframework.stereotype.Repository;
 public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAlertDAO {
 
     private static final String INSERT_SQL = "insert into power_alerts (symbol, alertDate, createdOn, updatedOn, "
-      + "broken, strength, strengthIncrease, firstSpot, firstVolume, volumeDelta, numCalls, numUnusual, numHighlyUnusual, "
-      + "numDarkPool, numImpliedVolatilityMatches) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+      + "putSeen, firstSpot, firstVolume, volumeDelta, numCalls, numUnusual, numHighlyUnusual, "
+      + "numDarkPool, numImpliedVolatilityMatches) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "update power_alerts set createdOn = ?, updatedOn = ?, "
-      + "broken = ?, strength = ?, strengthIncrease = ?, firstSpot = ?, firstVolume = ?, volumeDelta = ?, numCalls = ?, "
+      + "putSeen = ?, firstSpot = ?, firstVolume = ?, volumeDelta = ?, numCalls = ?, "
       + "numUnusual = ?, numHighlyUnusual = ?, numDarkPool = ?, numImpliedVolatilityMatches = ? where id = ?";
     private static final String DELETE_SQL = "delete from power_alerts where createdOn < ?";
 
@@ -43,14 +43,12 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           .updatedOn(rs.getTimestamp("updatedOn"))
           .firstVolume(Optional.ofNullable((Float)rs.getObject("firstVolume")))
           .volumeDelta(Optional.ofNullable((Float)rs.getObject("volumeDelta")))
-          .isBroken(rs.getBoolean("broken"))
+          .isPutSeen(rs.getBoolean("putSeen"))
           .numCalls(rs.getInt("numCalls"))
           .numUnusual(Optional.ofNullable((Integer)rs.getObject("numUnusual")))
           .numHighlyUnusual(Optional.ofNullable((Integer)rs.getObject("numHighlyUnusual")))
           .numDarkPool(Optional.ofNullable((Integer)rs.getObject("numDarkPool")))
           .firstSpot(rs.getFloat("firstSpot"))
-          .strength(rs.getInt("strength"))
-          .strengthIncrease(Optional.ofNullable((Integer)rs.getObject("strengthIncrease")))
           .numImpliedVolatilityMatches(Optional.ofNullable((Integer)rs.getObject("numImpliedVolatilityMatches")))
           .build();
     };
@@ -61,9 +59,9 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
     }
 
     @Override
-    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength, boolean rollback) {
+    public List<PowerAlert> findBySymbolAndDateRange(String symbol, Date from, Date to, boolean paOnly, boolean rollback) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
-        final List<PowerAlert> data = this.doFindBySymbolAndDateRange(symbol, from, to, minStrength, template);
+        final List<PowerAlert> data = this.doFindBySymbolAndDateRange(symbol, from, to, paOnly, template);
         if (!data.isEmpty() || !rollback)
             return data;
 
@@ -80,7 +78,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
                 c.set(Calendar.MILLISECOND, 0);
                 minDate = c.getTime();
                 c.add(Calendar.MILLISECOND, (int)TimeUnit.DAYS.toMillis(1));
-                return this.doFindBySymbolAndDateRange(symbol, minDate, c.getTime(), minStrength, template);
+                return this.doFindBySymbolAndDateRange(symbol, minDate, c.getTime(), paOnly, template);
             } else {
                 throw new NoDataInRangeException("No data found");
             }
@@ -89,13 +87,15 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         }
     }
 
-    private List<PowerAlert> doFindBySymbolAndDateRange(String symbol, Date from, Date to, int minStrength, JdbcTemplate template) {
+    private List<PowerAlert> doFindBySymbolAndDateRange(String symbol, Date from, Date to, boolean paOnly,
+      JdbcTemplate template) {
         final List<Object> params = new ArrayList<>(5);
         params.add(from);
         params.add(to);
-        params.add(minStrength);
-        params.add(minStrength >= 35 ? 4 : 3);
-        String sql = "select * from power_alerts where alertDate between ? and ? and strength >= ? and numCalls >= ?";
+        String sql = "select * from power_alerts where alertDate between ? and ? and numCalls >= 3";
+        if (paOnly) {
+            sql += " and numImpliedVolatilityMatches = numCalls";
+        }
         if (symbol != null && !symbol.isBlank()) {
             sql += " and symbol = ?";
             params.add(symbol);
@@ -141,9 +141,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           pa.getAlertDate(),
           pa.getCreatedOn(),
           pa.getUpdatedOn(),
-          pa.isBroken(),
-          pa.getStrength(),
-          pa.getStrengthIncrease().orElse(0),
+          pa.isPutSeen(),
           pa.getFirstSpot(),
           pa.getFirstVolume().orElse(0f),
           pa.getVolumeDelta().orElse(0f),
@@ -170,9 +168,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         return new Object[] {
           pa.getCreatedOn(),
           pa.getUpdatedOn(),
-          pa.isBroken(),
-          pa.getStrength(),
-          pa.getStrengthIncrease().orElse(0),
+          pa.isPutSeen(),
           pa.getFirstSpot(),
           pa.getFirstVolume().orElse(0f),
           pa.getVolumeDelta().orElse(0f),
