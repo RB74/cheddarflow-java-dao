@@ -127,14 +127,14 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
         final List<Object> params = new ArrayList<>(Arrays.asList(from, to));
 
-        String query = "select t.* from tiingo_iex_data t where t.createdOn between ? and ?";
+        String query = "select t.* from tiingo_iex_data t inner join symbols s on t.symbol = s.symbol where t.createdOn between ? and ?";
 
         if (symbolList != null && !symbolList.isEmpty()) {
             params.addAll(symbolList.stream().filter(s -> !s.isBlank()).map(String::toUpperCase).collect(Collectors.toList()));
             if (symbolList.size() == 1) {
-                query = query + " and t.symbol = ?";
+                query = query + " and s.symbol = ?";
             } else {
-                query = query + " and t.symbol in (" + this.getParamString(symbolList) + ")";
+                query = query + " and s.symbol in (" + this.getParamString(symbolList) + ")";
             }
         }
 
@@ -163,7 +163,8 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     public LatestIEXData findLatestObject(String symbol) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
-        String sql = "SELECT a.* FROM tiingo_iex_data a WHERE a.symbol = ? and a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1";
+        String sql = "SELECT a.* FROM tiingo_iex_data a inner join symbols s on a.symbol = s.symbol WHERE s.symbol = ? and "
+          + "a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1";
         final LatestIEXData data;
         try {
             data = template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name());
@@ -188,7 +189,8 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         }
         final Date start = calendar.getTime();
 
-        sql = "select b.lastPrice FROM tiingo_iex_data b WHERE b.symbol = ? AND b.createdOn between ? and ? "
+        sql = "select b.lastPrice FROM tiingo_iex_data b inner join symbols s on b.symbol = s.symbol WHERE s.symbol = ? "
+          + "AND b.createdOn between ? and ? "
           + "and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1";
         try {
             final Float prevClose =
@@ -237,16 +239,16 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     private List<TiingoIEXEvent> doListObjects(String symbol, Date from, Date to, JdbcTemplate template, int limit) {
         final List<Object> params = new ArrayList<>(Arrays.asList(from, to));
 
-        String query = "select t.* from tiingo_iex_data t where t.createdOn between ? and ?";
+        String query = "select t.* from tiingo_iex_data t inner join symbols s on t.symbol = s.symbol where t.createdOn between ? and ?";
 
         if (symbol != null) {
             String[] symbols = symbol.split(",");
             params.addAll(Arrays.stream(symbols).map(String::trim).filter(s -> !s.isBlank()).map(String::toUpperCase)
               .collect(Collectors.toList()));
             if (symbols.length == 1) {
-                query = query + " and t.symbol = ?";
+                query = query + " and s.symbol = ?";
             } else {
-                query = query + " and t.symbol in (" + this.getParamString(symbols) + ")";
+                query = query + " and s.symbol in (" + this.getParamString(symbols) + ")";
             }
         }
 
