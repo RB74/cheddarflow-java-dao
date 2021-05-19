@@ -156,7 +156,7 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
 
         this.broadcast(() -> {
             try {
-                return getMarketData(in);
+                return getMarketData(in, subsector);
             } catch (ParseException e) {
                 logger.error("Error broadcasting {}", in, e);
             }
@@ -165,7 +165,7 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
         return true;
     }
 
-    private MarketData getMarketData(MarketDataInput in) throws ParseException {
+    private MarketData getMarketData(MarketDataInput in, String subsector) throws ParseException {
         final MarketData marketData = new MarketData();
         marketData.setSentiment(in.sentiment);
         marketData.setSize(in.size);
@@ -199,7 +199,7 @@ public class TradesTable extends AbstractDAO<MarketData> implements TradesDAO {
         marketData.setNotional(in.notional);
         marketData.setOi(in.oi);
         marketData.setOutOfMoney(in.otm);
-        marketData.setSubsector("");
+        marketData.setSubsector(subsector);
         marketData.setSection(in.section);
         marketData.setSector("");
         marketData.setUnusual(in.isUnusual());
