@@ -90,7 +90,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         final int[] num = template.batchUpdate(insertOp, params);
 
         this.logger.trace("Pushed {} records to {}", params.size(), this.getClass().getSimpleName());
-        return Stream.of(num).flatMapToInt(IntStream::of).sum();
+        return IntStream.of(num).sum();
     }
 
     private List<Object[]> getBatchParameters(List<TiingoIEXEvent> input) {
