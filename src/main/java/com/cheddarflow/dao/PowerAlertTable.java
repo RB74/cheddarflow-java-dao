@@ -94,7 +94,7 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         params.add(to);
         String sql = "select * from power_alerts where alertDate between ? and ? and numCalls >= 3";
         if (paOnly) {
-            sql += " and numImpliedVolatilityMatches = numCalls";
+            sql += " and numImpliedVolatilityMatches >= 3";
         }
         if (symbol != null && !symbol.isBlank()) {
             sql += " and symbol = ?";
