@@ -163,11 +163,11 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
     public LatestIEXData findLatestObject(String symbol) {
         final JdbcTemplate template = JdbcTemplates.getInstance().getTemplate(true);
 
-        String sql = "SELECT a.* FROM tiingo_iex_data a inner join symbols s on a.symbol = s.symbol WHERE s.symbol = ? and "
-          + "a.tiingoEventType = ? ORDER BY a.createdOn DESC LIMIT 1";
+        String sql = "SELECT a.* FROM tiingo_iex_data a inner join symbols s on a.symbol = s.symbol and a.id = s.id "
+          + "WHERE s.symbol = ? LIMIT 1";
         final LatestIEXData data;
         try {
-            data = template.queryForObject(sql, this.latestRowMapper, symbol, TiingoEventType.LAST_TRADE.name());
+            data = template.queryForObject(sql, this.latestRowMapper, symbol);
             if (data == null) {
                 return null;
             }
@@ -190,8 +190,7 @@ public class TiingoIEXEventTable extends AbstractDAO<TiingoIEXEvent> implements 
         final Date start = calendar.getTime();
 
         sql = "select b.lastPrice FROM tiingo_iex_data b inner join symbols s on b.symbol = s.symbol WHERE s.symbol = ? "
-          + "AND b.createdOn between ? and ? "
-          + "and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1";
+          + "and b.createdOn between ? and ? and b.tiingoEventType = ? ORDER BY b.createdOn DESC LIMIT 1";
         try {
             final Float prevClose =
               template.queryForObject(sql, Float.class, symbol, start, end, TiingoEventType.LAST_TRADE.name());
