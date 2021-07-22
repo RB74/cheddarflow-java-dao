@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -53,9 +54,13 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
           .build();
     };
 
+    private final DXTimeAndSaleDAO darkPoolDAO;
+
     @Autowired
-    public PowerAlertTable(@Qualifier("normalTaskExecutor") ThreadPoolTaskExecutor taskExecutor) {
+    public PowerAlertTable(@Qualifier("normalTaskExecutor") ThreadPoolTaskExecutor taskExecutor,
+      DXTimeAndSaleDAO darkPoolDAO) {
         super(taskExecutor);
+        this.darkPoolDAO = darkPoolDAO;
     }
 
     @Override
@@ -64,6 +69,16 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
         final List<PowerAlert> data = this.doFindBySymbolAndDateRange(symbol, from, to, paOnly, template);
         if (!data.isEmpty() || !rollback)
             return data;
+
+        final long maxDarkPool = this.darkPoolDAO.getMaxTimestamp();
+        final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
+        calendar.set(Calendar.HOUR_OF_DAY, 9);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        if (maxDarkPool >= calendar.getTimeInMillis()) {
+            return data;
+        }
 
         final Date rollbackDate = new Date(from.getTime() - TimeUnit.DAYS.toMillis(7));
         try {
