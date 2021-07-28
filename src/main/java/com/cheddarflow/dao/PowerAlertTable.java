@@ -71,8 +71,8 @@ public class PowerAlertTable extends AbstractDAO<PowerAlert> implements PowerAle
             return data;
 
         final long maxDarkPool = this.darkPoolDAO.getMaxTimestamp();
-        final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
-        calendar.set(Calendar.HOUR_OF_DAY, 9);
+        final Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        calendar.set(Calendar.HOUR_OF_DAY, 13);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
